@@ -1,37 +1,46 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import mqtt from "mqtt/dist/mqtt";
 
 function BoxMailer() {
   const [nombreDeLettres, setNombreDeLettres] = useState(0);
   const [poids, setPoids] = useState(0);
 
-  const ajouterPoids = (nouveauPoids) => {
-    setPoids(poids + nouveauPoids);
-  };
-
   const ajouterLettre = () => {
     setNombreDeLettres(nombreDeLettres + 1);
   };
 
-  const handleSubmit = (event) => {
-    event.preventDefault();
-    const nouveauPoids = Number(event.target.elements.poids.value);
-    ajouterPoids(nouveauPoids);
-    ajouterLettre();
-  };
+  useEffect(() => {
+    if (poids > 0) {
+      ajouterLettre();
+    } else if (poids === 0){
+      setNombreDeLettres(0);
+    }
+    localStorage.setItem("poids", poids)
+    localStorage.setItem("nombreDeLettres", nombreDeLettres)
+  }, [poids])
+
+  const client  = mqtt.connect('ws://broker.emqx.io:8083/mqtt')
+
+  client.on('connect', function () {
+    client.subscribe('mailbox/#', function (err) {
+    })
+  })
+
+  client.on('message', function (topic, message) {
+    // message is Buffer
+    console.log(topic, message.toString())
+    if (topic.includes( "weight")) {
+      setPoids(parseInt(message.toString()))
+    }
+  })
 
   return (
     <div className="App">
       <div className="Counter">
       <p>Nombre d'entrée : {nombreDeLettres}</p>
-      <form onSubmit={handleSubmit}></form>
       </div>
       <div className="Weight">
         <p>Poids actuel: {poids} gr</p>
-        <form onSubmit={handleSubmit}>
-          <label htmlFor="poids">Ajouter du poids:</label>
-          <input id="poids" type="number" />
-          <button type="submit">Ajouter</button>
-        </form>
       </div>
     </div>  
   );
