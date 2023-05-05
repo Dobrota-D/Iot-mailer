@@ -4,9 +4,13 @@ var C = xbee_api.constants;
 require('dotenv').config()
 const mqtt = require('mqtt')
 const client = mqtt.connect('ws://broker.emqx.io:8083/mqtt')
-const minValueVariation = 30;
+const minValueVariation = 25;
+const initialWeight = 335;
+const ratioWeightPoint = 2;
 
-let lastValue = 0;
+let lastValue = initialWeight;
+
+let lock = false; 
 
 client.on('connect', function () { 
   client.subscribe('mailbox/#', function (err) {
@@ -18,14 +22,10 @@ client.on('message', function (topic, message) {
   console.log(topic, message.toString())
   if (topic == 'mailbox/lock') {
     if (message.toString() == 'true') {
+      lock = true;
       lightRed();
     } else {
-      lightGreen();
-    }
-  } else if (topic == 'mailbox/weight') {
-    if (message.toString() == '1200') {
-      lightRed();
-    } else {
+      lock = false;
       lightGreen();
     }
   }
@@ -69,13 +69,8 @@ const lightGreen = () => {
 }
 
 serialport.on("open", function () {
-  var frame_obj = { // AT Request to be sent
-    type: C.FRAME_TYPE.AT_COMMAND,
-    command: "NI",
-    commandParameter: [],
-  };
-
-  xbeeAPI.builder.write(frame_obj);
+  
+  lightGreen();
 
   frame_obj = { // AT Request to be sent
     type: C.FRAME_TYPE.REMOTE_AT_COMMAND_REQUEST,
@@ -114,19 +109,19 @@ xbeeAPI.parser.on("data", function (frame) {
     console.log("ZIGBEE_IO_DATA_SAMPLE_RX")
     console.log(frame.analogSamples.AD1)
     let dataReceived = parseInt(frame.analogSamples.AD1);
-    
-    if (dataReceived == 1200) {
-      lastValue = dataReceived;
-      client.publish('mailbox/weight', '1200')
-      client.publish('mailbox/lock', 'true')
-    } else if (dataReceived == 0 && lastValue != 0) {
-      lastValue = 0;
+    if (dataReceived <= initialWeight && lastValue != initialWeight) {
+      lastValue = initialWeight;
       client.publish('mailbox/weight', '0')
       client.publish('mailbox/lock', 'false')
-    } else if (dataReceived > lastValue && (dataReceived - lastValue) > minValueVariation) {
+    }
+    else if (!lock && dataReceived == 1200) {
       lastValue = dataReceived;
-      client.publish('mailbox/weight', (dataReceived ).toString())
-    } 
+      client.publish('mailbox/weight', ((dataReceived - initialWeight) / ratioWeightPoint).toString())
+      client.publish('mailbox/lock', 'true')
+    } else if (!lock && dataReceived > lastValue && (dataReceived - lastValue) > minValueVariation) {
+      lastValue = dataReceived;
+      client.publish('mailbox/weight', ((dataReceived - initialWeight) / ratioWeightPoint ).toString())
+    }
    
 
   } else if (C.FRAME_TYPE.REMOTE_COMMAND_RESPONSE === frame.type) {
