@@ -16,6 +16,19 @@ client.on('connect', function () {
 
 client.on('message', function (topic, message) { 
   console.log(topic, message.toString())
+  if (topic == 'mailbox/lock') {
+    if (message.toString() == 'true') {
+      lightRed();
+    } else {
+      lightGreen();
+    }
+  } else if (topic == 'mailbox/weight') {
+    if (message.toString() == '1200') {
+      lightRed();
+    } else {
+      lightGreen();
+    }
+  }
 })
 
 const SERIAL_PORT = process.env.SERIAL_PORT;
@@ -42,10 +55,18 @@ let switch_off_red_frame = {
     commandParameter: [ "05" ],
 };
 let switch_on_red_frame = {...switch_off_red_frame, commandParameter: [ "04" ] };
-
 let switch_off_green_frame = {...switch_off_red_frame, command: "D3" };
+let switch_on_green_frame = { ...switch_off_green_frame, commandParameter: [ "04" ] };
 
-let switch_on_green_frame = {...switch_off_green_frame, commandParameter: [ "04" ] };
+const lightRed = () => {
+  xbeeAPI.builder.write(switch_on_red_frame);
+  xbeeAPI.builder.write(switch_off_green_frame);
+}
+
+const lightGreen = () => { 
+  xbeeAPI.builder.write(switch_off_red_frame);
+  xbeeAPI.builder.write(switch_on_green_frame);
+}
 
 serialport.on("open", function () {
   var frame_obj = { // AT Request to be sent
@@ -93,8 +114,20 @@ xbeeAPI.parser.on("data", function (frame) {
     console.log("ZIGBEE_IO_DATA_SAMPLE_RX")
     console.log(frame.analogSamples.AD1)
     let dataReceived = parseInt(frame.analogSamples.AD1);
-    console.log(dataReceived + ' / ' + lastValue + ' / ' + (dataReceived - lastValue));
     
+    if (dataReceived == 1200) {
+      lastValue = dataReceived;
+      client.publish('mailbox/weight', '1200')
+      client.publish('mailbox/lock', 'true')
+    } else if (dataReceived == 0 && lastValue != 0) {
+      lastValue = 0;
+      client.publish('mailbox/weight', '0')
+      client.publish('mailbox/lock', 'false')
+    } else if (dataReceived > lastValue && (dataReceived - lastValue) > minValueVariation) {
+      lastValue = dataReceived;
+      client.publish('mailbox/weight', (dataReceived ).toString())
+    } 
+   
 
   } else if (C.FRAME_TYPE.REMOTE_COMMAND_RESPONSE === frame.type) {
     console.log("REMOTE_COMMAND_RESPONSE", frame)
