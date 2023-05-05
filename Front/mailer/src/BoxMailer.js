@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import mqtt from "mqtt/dist/mqtt";
 import "./App.css";
+import Logo from "./Logo";
 
 function BoxMailer() {
   const [nombreDeLettres, setNombreDeLettres] = useState(0);
@@ -58,6 +59,9 @@ function BoxMailer() {
 
   return (
     <div className="App">
+      <div className="Logo">
+        <Logo />
+      </div>
       <div className="Counter">
         <p className={isLocked ? "disabled" : ""} disabled={isLocked}>Nombre d'entrée : {nombreDeLettres}</p>
       </div>
