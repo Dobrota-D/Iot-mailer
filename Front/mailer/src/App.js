@@ -3,9 +3,8 @@ import BoxMailer from './BoxMailer';
 
 function App() {
   return (
-    <div className="App">
+    <div>
       <BoxMailer/>
-      <div className="Lock"></div>
     </div>
   );
 }
