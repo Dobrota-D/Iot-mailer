@@ -19,7 +19,6 @@ client.on('connect', function () {
 })
 
 client.on('message', function (topic, message) { 
-  console.log(topic, message.toString())
   if (topic == 'mailbox/lock') {
     if (message.toString() == 'true') {
       lock = true;
@@ -82,9 +81,6 @@ serialport.on("open", function () {
 
 });
 
-// All frames parsed by the XBee will be emitted here
-
-// storage.listSensors().then((sensors) => sensors.forEach((sensor) => console.log(sensor.data())))
 
 xbeeAPI.parser.on("data", function (frame) {
 
@@ -92,12 +88,9 @@ xbeeAPI.parser.on("data", function (frame) {
 
   //on packet received, dispatch event
   //let dataReceived = String.fromCharCode.apply(null, frame.data);
-  if (C.FRAME_TYPE.ZIGBEE_RECEIVE_PACKET === frame.type) {
-    console.log("C.FRAME_TYPE.ZIGBEE_RECEIVE_PACKET");
-    let dataReceived = String.fromCharCode.apply(null, frame.data);
-    console.log(">> ZIGBEE_RECEIVE_PACKET >", dataReceived);
-
-  }
+  // if (C.FRAME_TYPE.ZIGBEE_RECEIVE_PACKET === frame.type) {
+  //   let dataReceived = String.fromCharCode.apply(null, frame.data);
+  // }
 
   if (C.FRAME_TYPE.NODE_IDENTIFICATION === frame.type) {
     // let dataReceived = String.fromCharCode.apply(null, frame.nodeIdentifier);
