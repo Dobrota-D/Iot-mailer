@@ -1,4 +1,4 @@
-.App {
+/* .App {
   text-align: center;
   display: flex;
   flex-direction: row;
@@ -16,4 +16,41 @@
   width: 40%;
   border: 1px black solid;
   margin: 5px;
+} */
+
+.App {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+
+.Counter,
+.Weight {
+  font-size: 2rem;
+  font-weight: bold;
+  margin: 1rem;
+  padding: 1rem;
+  background-color: #f9f9f9;
+  border-radius: 5px;
+  box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+}
+
+.Counter {
+  color: #007bff;
+}
+
+.Weight {
+  color: #28a745;
+}
+
+.Counter::before {
+  content: "📩";
+  margin-right: 0.5rem;
+}
+
+.Weight::before {
+  content: "⚖️";
+  margin-right: 0.5rem;
 }
