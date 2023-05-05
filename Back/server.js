@@ -14,7 +14,9 @@ let lock = false;
 
 client.on('connect', function () { 
   client.subscribe('mailbox/#', function (err) {
-    
+    if (err) {
+      console.log("Can't subscribe to mailbox/#", err);
+    }
   })
 })
 
