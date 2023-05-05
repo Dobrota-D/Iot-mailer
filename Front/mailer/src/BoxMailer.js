@@ -9,12 +9,18 @@ function BoxMailer() {
 
   const handleClick = () => {
     setIsLocked(!isLocked);
+    if (isLocked == false) {
+      setIsLocked(!isLocked)
+      client.publish('mailbox/lock', 'true')    
+    } if (isLocked == true) {
+      setIsLocked(!isLocked)
+      client.publish('mailbox/lock', 'false')
+    }
   };
 
   const ajouterLettre = () => {
     if (!isLocked) {
       setNombreDeLettres(nombreDeLettres + 1);
-      setPoids(poids + 1);
     }
   };
 
@@ -38,8 +44,15 @@ function BoxMailer() {
   client.on('message', function (topic, message) {
     // message is Buffer
     console.log(topic, message.toString())
-    if (topic.includes( "weight")) {
+    if (topic.includes( "weight") && !isLocked) {
       setPoids(parseInt(message.toString()))
+    }
+    if (topic.includes("lock")) {
+      if (!isLocked && message.toString() == "true") {
+        setIsLocked(true)
+      } else if (isLocked && message.toString() == "false") {
+        setIsLocked(false)
+      }
     }
   })
 
